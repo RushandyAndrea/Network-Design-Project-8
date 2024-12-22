@@ -9,8 +9,6 @@ The playbook will configure VLANs, STP, EIGRP, and port security on Cisco switch
 
 Inventory File (inventory.yml):
 
-yaml
-Copy code
 all:
   hosts:
     core_switch:
@@ -23,8 +21,6 @@ all:
       ansible_password: admin_password
 Playbook (network_config.yml):
 
-yaml
-Copy code
 - name: Configure Network Devices
   hosts: all
   gather_facts: no
@@ -81,16 +77,13 @@ Copy code
           password: "{{ ansible_password }}"
 Run the Playbook:
 
-bash
-Copy code
 ansible-playbook -i inventory.yml network_config.yml
 3. Monitoring System
 Monitoring with Nagios
 Install Nagios:
 
 Install on a Linux server (e.g., Ubuntu):
-bash
-Copy code
+
 sudo apt update
 sudo apt install nagios4 nagios-plugins nagios-nrpe-plugin
 Add Hosts for Monitoring: Edit /etc/nagios4/conf.d/hosts.cfg:
@@ -112,8 +105,7 @@ define host {
 }
 Add Services: Edit /etc/nagios4/conf.d/services.cfg:
 
-cfg
-Copy code
+
 define service {
   use                     generic-service
   host_name               core_switch
@@ -129,16 +121,13 @@ define service {
 }
 Restart Nagios:
 
-bash
-Copy code
+
 sudo systemctl restart nagios4
 Python Script for SNMP Monitoring
 This script collects real-time data from devices using SNMP.
 
 Script (snmp_monitor.py):
 
-python
-Copy code
 from pysnmp.hlapi import *
 
 def snmp_get(ip, community, oid):
@@ -171,7 +160,7 @@ Backup Configurations
 Script (backup_configs.sh):
 
 bash
-Copy code
+
 #!/bin/bash
 DATE=$(date +%F)
 HOSTS=("192.168.1.1" "192.168.1.2")
@@ -181,25 +170,25 @@ done
 Schedule in Cron:
 
 bash
-Copy code
+
 crontab -e
 Add the following:
 
 bash
-Copy code
+
 0 2 * * * /path/to/backup_configs.sh
 Log Monitoring:
 Script (monitor_logs.sh):
 
 bash
-Copy code
+
 #!/bin/bash
 LOGFILE="/var/log/syslog"
 grep -i "error" $LOGFILE >> /var/log/critical_errors.log
 Schedule in Cron:
 
 bash
-Copy code
+
 */10 * * * * /path/to/monitor_logs.sh
 Summary
 Ansible automates device configuration, reducing manual effort.
