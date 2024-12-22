@@ -1,0 +1,209 @@
+1. Automation Overview
+Tools:
+Ansible: Automate device configuration.
+Python: Create scripts for custom tasks and monitoring.
+Cron Jobs: Schedule periodic checks and backups.
+2. Device Configuration with Ansible
+Ansible Playbook for Device Configuration
+The playbook will configure VLANs, STP, EIGRP, and port security on Cisco switches and routers.
+
+Inventory File (inventory.yml):
+
+yaml
+Copy code
+all:
+  hosts:
+    core_switch:
+      ansible_host: 192.168.1.1
+      ansible_user: admin
+      ansible_password: admin_password
+    router:
+      ansible_host: 192.168.1.2
+      ansible_user: admin
+      ansible_password: admin_password
+Playbook (network_config.yml):
+
+yaml
+Copy code
+- name: Configure Network Devices
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Configure VLANs
+      ios_config:
+        lines:
+          - vlan 10
+          - name Management
+          - vlan 20
+          - name Finance
+          - vlan 30
+          - name HR
+          - vlan 40
+          - name IT
+          - vlan 50
+          - name Guest_WiFi
+        parents: []
+        before: enable
+        provider:
+          host: "{{ ansible_host }}"
+          username: "{{ ansible_user }}"
+          password: "{{ ansible_password }}"
+    - name: Enable STP
+      ios_config:
+        lines:
+          - spanning-tree mode rapid-pvst
+          - spanning-tree vlan 10 priority 4096
+        provider:
+          host: "{{ ansible_host }}"
+          username: "{{ ansible_user }}"
+          password: "{{ ansible_password }}"
+    - name: Configure EIGRP
+      ios_config:
+        lines:
+          - router eigrp 100
+          - network 192.168.0.0 0.0.255.255
+          - no auto-summary
+        provider:
+          host: "{{ ansible_host }}"
+          username: "{{ ansible_user }}"
+          password: "{{ ansible_password }}"
+    - name: Configure Port Security
+      ios_config:
+        lines:
+          - switchport mode access
+          - switchport port-security
+          - switchport port-security maximum 2
+          - switchport port-security violation restrict
+        parents: interface GigabitEthernet1/1
+        provider:
+          host: "{{ ansible_host }}"
+          username: "{{ ansible_user }}"
+          password: "{{ ansible_password }}"
+Run the Playbook:
+
+bash
+Copy code
+ansible-playbook -i inventory.yml network_config.yml
+3. Monitoring System
+Monitoring with Nagios
+Install Nagios:
+
+Install on a Linux server (e.g., Ubuntu):
+bash
+Copy code
+sudo apt update
+sudo apt install nagios4 nagios-plugins nagios-nrpe-plugin
+Add Hosts for Monitoring: Edit /etc/nagios4/conf.d/hosts.cfg:
+
+cfg
+Copy code
+define host {
+  use                     generic-host
+  host_name               core_switch
+  alias                   Core Switch
+  address                 192.168.1.1
+}
+
+define host {
+  use                     generic-host
+  host_name               router
+  alias                   Main Router
+  address                 192.168.1.2
+}
+Add Services: Edit /etc/nagios4/conf.d/services.cfg:
+
+cfg
+Copy code
+define service {
+  use                     generic-service
+  host_name               core_switch
+  service_description     CPU Load
+  check_command           check_snmp!-C public -o .1.3.6.1.4.1.2021.10.1.3.1
+}
+
+define service {
+  use                     generic-service
+  host_name               router
+  service_description     Uptime
+  check_command           check_ping!100.0,20%!500.0,60%
+}
+Restart Nagios:
+
+bash
+Copy code
+sudo systemctl restart nagios4
+Python Script for SNMP Monitoring
+This script collects real-time data from devices using SNMP.
+
+Script (snmp_monitor.py):
+
+python
+Copy code
+from pysnmp.hlapi import *
+
+def snmp_get(ip, community, oid):
+    iterator = getCmd(
+        SnmpEngine(),
+        CommunityData(community),
+        UdpTransportTarget((ip, 161)),
+        ContextData(),
+        ObjectType(ObjectIdentity(oid))
+    )
+    error_indication, error_status, error_index, var_binds = next(iterator)
+    if error_indication:
+        return str(error_indication)
+    elif error_status:
+        return f'{error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or "?"}'
+    else:
+        return var_binds[0][1]
+
+# Example Usage
+devices = {
+    'core_switch': '192.168.1.1',
+    'router': '192.168.1.2',
+}
+
+for name, ip in devices.items():
+    cpu_usage = snmp_get(ip, 'public', '.1.3.6.1.4.1.2021.10.1.3.1')
+    print(f'{name} CPU Usage: {cpu_usage}')
+4. Cron Jobs for Regular Tasks
+Backup Configurations
+Script (backup_configs.sh):
+
+bash
+Copy code
+#!/bin/bash
+DATE=$(date +%F)
+HOSTS=("192.168.1.1" "192.168.1.2")
+for HOST in "${HOSTS[@]}"; do
+  ssh admin@$HOST "show running-config" > /backups/$HOST-config-$DATE.txt
+done
+Schedule in Cron:
+
+bash
+Copy code
+crontab -e
+Add the following:
+
+bash
+Copy code
+0 2 * * * /path/to/backup_configs.sh
+Log Monitoring:
+Script (monitor_logs.sh):
+
+bash
+Copy code
+#!/bin/bash
+LOGFILE="/var/log/syslog"
+grep -i "error" $LOGFILE >> /var/log/critical_errors.log
+Schedule in Cron:
+
+bash
+Copy code
+*/10 * * * * /path/to/monitor_logs.sh
+Summary
+Ansible automates device configuration, reducing manual effort.
+Nagios provides comprehensive monitoring with alerts for device health and performance.
+Python scripts enable real-time SNMP monitoring.
+Cron jobs handle backups and log checks on a regular schedule.
+This setup ensures the network infrastructure is automated, monitored, and maintained efficiently.
