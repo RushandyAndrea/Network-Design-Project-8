@@ -1,0 +1,236 @@
+Network Design by Rushandy
+Title: NOC Engineer
+Date: 12/22/2024
+Project # 8
+Rushandy’s Network design: Setting Up a Corporate Office Network
+
+
+
+
+ 
+(Screen shot is part of my own business idea.)
+
+
+
+Objective: Design a secure, scalable, and efficient network for a new corporate office with 150 employees. The office includes an executive area, open workspaces, meeting rooms, and a server room.
+________________________________________
+1. Requirements Assessment
+•	Bandwidth Needs: 1 Gbps internet connection for high-speed internet access.
+•	User Requirements: 150 employees, each with a workstation or laptop. Wireless connectivity for mobile devices.
+•	Device Requirements: Printers, VoIP phones, surveillance cameras, and IoT devices (smart lights, thermostats).
+•	Applications: Email, cloud services (e.g., Office 365), and remote access for 20 users.
+•	Security: Compliance with GDPR and ISO 27001 standards.
+________________________________________
+2. Hardware and Equipment
+Core Network Equipment:
+•	Firewall: Fortinet FortiGate 100E for perimeter security.
+•	Router: Cisco ISR 4331 for internet connection and routing.
+•	Switches:
+o	3 Cisco Catalyst 2960X-48FPD-L (48 ports) for workstations and office devices.
+o	1 Cisco Catalyst 9200-24P for server connections.
+•	Access Points (APs): 10 Ubiquiti UniFi AP-AC-Pro for wireless coverage across the office.
+•	Server: Dell PowerEdge R750 for hosting local applications, Active Directory, and file storage.
+•	Backup Power: APC Smart-UPS for power redundancy.
+
+End-User Devices:
+•	150 laptops (e.g., Dell Latitude 5520 or equivalent).
+•	10 shared printers (e.g., HP LaserJet Enterprise MFP M631).
+Physical Security:
+•	Surveillance cameras (e.g., Axis P3245-LVE) integrated into the network.
+________________________________________
+3. Software and Tools
+•	Network Management: SolarWinds Network Performance Monitor for monitoring and troubleshooting.
+•	Endpoint Security: Symantec Endpoint Protection for antivirus and threat detection.
+•	Data Backup: Veeam Backup & Replication for automated data backups.
+•	Access Control: Microsoft Active Directory for user authentication.
+•	Network Design: Cisco Packet Tracer and SolarWinds Network Topology Mapper for planning and visualization.
+________________________________________
+4. Security Measures
+•	Firewalls: Use FortiGate to create access control lists (ACLs) for filtering unauthorized traffic.
+•	Encryption: SSL/TLS for secure web traffic and email communications.
+•	Virtual Private Network (VPN): FortiClient VPN for secure remote access.
+•	Network Segmentation:
+o	VLANs to isolate departments (e.g., Finance, HR, IT) for enhanced security.
+o	Separate VLANs for IoT devices and guest Wi-Fi.
+•	Intrusion Detection/Prevention: Fortinet Intrusion Prevention System (IPS) to detect and block threats.
+•	Access Control: Role-Based Access Control (RBAC) implemented in Active Directory.
+•	Patch Management: Automate updates using ManageEngine Patch Manager Plus.
+________________________________________
+5. Network Layout
+•	Topology: Star topology connecting all devices to switches, which link to the router.
+•	Cabling: Cat6 Ethernet cables for wired connections; fiber-optic cable for uplinks between floors and the server room.
+•	Server Room Design: Climate-controlled environment with proper cable management and physical locks.
+________________________________________
+6. Implementation Steps
+1.	Site Survey:
+o	Assess wireless signal strength using Ekahau HeatMapper.
+o	Identify optimal placement for access points and equipment racks.
+2.	Hardware Installation:
+o	Mount switches and the server in a secure rack.
+o	Deploy access points for even wireless coverage.
+3.	Configuration:
+o	Set up VLANs and configure inter-VLAN routing (VTP Server).
+o	Program firewalls for traffic filtering and NAT.
+o	Configure QoS (Quality of Service) for VoIP and video conferencing.
+4.	Testing:
+o	Use Cisco Packet Tracer for packet analysis.
+o	Simulate traffic loads to ensure stability.
+5.	Documentation:
+o	Create network topology diagrams, IP address allocations, and access control policies.
+________________________________________
+7. Ongoing Management
+•	Monitoring: Utilize Nagios for real-time performance monitoring.
+•	Audits: Conduct quarterly security audits.
+•	User Training: Train employees on phishing awareness and password best practices.
+•	Upgrades: Plan for hardware and software updates every 3-5 years.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Network configuration
+
+1. Core Network Design
+Layer 2 (Switching)
+1.	Spanning Tree Protocol (STP):
+o	Protocol: Use Rapid Spanning Tree Protocol (RSTP) for faster convergence.
+o	Root Bridge: Assign the core switch (Cisco Catalyst 9200-24P) as the root bridge. Configure it with a lower priority (e.g., spanning-tree vlan 1 priority 4096) to ensure it becomes the root.
+o	Port Roles: Identify root, designated, and blocking ports to prevent loops.
+o	PortFast: Enable on edge ports to reduce startup time for end-user devices.
+o	BPDU Guard: Enable on edge ports to protect against rogue switches.
+2.	VLAN Segmentation:
+o	Departments: Create VLANs to segment traffic:
+	VLAN 10: Management
+	VLAN 20: Finance
+	VLAN 30: HR
+	VLAN 40: IT
+	VLAN 50: Guest Wi-Fi
+	VLAN 60: IoT Devices
+o	Inter-VLAN Routing: Configure SVI (Switch Virtual Interfaces) on the core switch for routing between VLANs.
+3.	Trunking:
+o	Use 802.1Q for VLAN tagging.
+o	Allow only necessary VLANs on trunk ports to reduce unnecessary traffic.
+
+
+Layer 3 (Routing)
+1.	Routing Protocols:
+o	EIGRP:
+	Use EIGRP (Enhanced Interior Gateway Routing Protocol) within the corporate LAN for dynamic routing.
+	Configure EIGRP on the core switch and router:
+router eigrp 100
+network 192.168.0.0 0.0.255.255
+passive-interface default
+no passive-interface GigabitEthernet1/0/1
+	Use Summarization at major boundaries (e.g., 192.168.0.0/16) to reduce routing table size.
+o	BGP:
+	Configure Border Gateway Protocol (BGP) for internet peering with the ISP.
+	Use the router as the BGP speaker:
+router bgp 65001
+neighbor 203.0.113.1 remote-as 65002
+network 192.168.0.0 mask 255.255.0.0
+2.	Default Route:
+o	Advertise a default route to EIGRP from the core switch pointing toward the internet router:
+ip route 0.0.0.0 0.0.0.0 203.0.113.254
+redistribute static
+
+
+
+3.	Redundancy:
+o	Use HSRP (Hot Standby Router Protocol) or VRRP (Virtual Router Redundancy Protocol) for gateway redundancy.
+________________________________________
+2. QoS (Quality of Service)
+1.	Classification:
+o	Classify traffic based on DSCP (Differentiated Services Code Point) values:
+	VoIP: EF (Expedited Forwarding, DSCP 46)
+	Video: AF41 (Assured Forwarding)
+	Default: Best Effort (DSCP 0)
+2.	Policy Application:
+o	Configure Low Latency Queuing (LLQ) on the router to prioritize VoIP and video traffic:
+class-map match-any VOICE
+  match dscp ef
+policy-map QOS_POLICY
+  class VOICE
+    priority 50
+  class class-default
+    fair-queue
+interface GigabitEthernet1/0
+  service-policy output QOS_POLICY
+
+
+
+
+________________________________________
+3. WAN Configuration
+1.	Internet Connection:
+o	Dual-homed connections to two ISPs for redundancy.
+o	Configure BGP with route preference (Local Preference and AS Path) to ensure one ISP is primary and the other is failover.
+2.	VPN:
+o	Use IPSec VPN for remote users:
+	Encryption: AES-256.
+	Authentication: Pre-shared keys or certificates.
+________________________________________
+4. IP Addressing Plan
+•	Subnetting: Efficiently divide the 192.168.0.0/16 block:
+o	VLAN 10 (Management): 192.168.10.0/24
+o	VLAN 20 (Finance): 192.168.20.0/24
+o	VLAN 30 (HR): 192.168.30.0/24
+o	VLAN 40 (IT): 192.168.40.0/24
+o	VLAN 50 (Guest Wi-Fi): 192.168.50.0/24
+o	VLAN 60 (IoT Devices): 192.168.60.0/24
+________________________________________
+5. Network Security Enhancements
+1.	ACLs:
+o	Apply Ingress ACLs on VLAN interfaces to restrict inter-VLAN traffic:
+access-list 100 permit tcp 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255 eq 80
+access-list 100 deny ip any any
+
+
+Apply on the interface:
+interface Vlan10
+  ip access-group 100 in
+2.	Route Filtering:
+o	Prevent BGP from advertising private IP addresses to the ISP.
+3.	Port Security:
+o	Configure port security on access ports:
+switchport port-security
+switchport port-security maximum 2
+switchport port-security violation restrict
+4.	DHCP Snooping:
+o	Enable DHCP Snooping to block rogue DHCP servers.
+________________________________________
+6. Final Testing and Validation
+1.	EIGRP Validation:
+o	Verify EIGRP neighbors using:
+show ip eigrp neighbors
+2.	BGP Validation:
+o	Check BGP neighbors and advertised routes:
+show ip bgp summary
+3.	STP Validation:
+o	Confirm root bridge and port states:
+show spanning-tree vlan 10
+
+
+
+4.	Performance Testing:
+o	Use iPerf for bandwidth testing between VLANs.
+o	Run simulated traffic to test QoS policies.
+________________________________________
+Diagram (Optional if needed):
+A topology diagram can be designed in Cisco Packet Tracer or Visio, showcasing:
+•	Core switch as the central point.
+•	Routers for WAN and BGP connections.
+•	VLAN segmentation.
+This design ensures scalability, high performance, and secure communication across the network while adhering to CCNP-level best practices. 
+
